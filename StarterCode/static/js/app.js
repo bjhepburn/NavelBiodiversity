@@ -18,55 +18,82 @@ navelData.then((data => {
         select.appendChild(element);
     }
     
-     
+    let id = names[0];
+    let currentDemo = metadata[0];
+    let currentSample = samples[0];
+
     d3.select("#selDataset").on("change", updateData);
+
     function updateData() {
         // Update Demographic Info
         let dropdownMenu = d3.select("#selDataset");
         let dataset = dropdownMenu.property("value");
-
-        metadataPos = 0
         for (let j = 0; j < metadata.length; j++){
             if (metadata[j].id == dataset) {
-                metadataPos = j;
+                currentDemo = metadata[j];
             }
-
-
-
-        let displayData = document.getElementById("sample-metadata");
-        let ul = document.createElement("ul");
-              
-        for (let j = 0; j < metadata.length; j++){
-        if (metadata[j].id == dataset) {
-            for (key in metadata[j]) {
-                displayData.innerHTML = "";
-                let li = document.createElement("li");
-                li.appendChild(document.createTextNode(`${key}: ${metadata[j][key]}`));
-                ul.appendChild(li);
-                };
-            }
+        updateDemo(currentDemo);
         }
-        displayData.appendChild(ul);
-
-        //Update Bar Chart
+        // Update Sample Data
         for (let k = 0; k < samples.length; k++) {
             if (samples[k].id == dataset) {
-                let y = samples[k].otu_ids.slice(0,10);
-                let x = samples[k].sample_values.slice(0,10);
-                // console.log(samples[k].otu_ids.slice(1,10));
-                let trace = {
-                    x: x,
-                    y: y,
-                    text: samples[k].otu_labels,
-                    type: "bar",
-                    orientation: 'h'
-                }
-            
+                currentSample = samples[k];
             }
-        }    
-    Plotly.newPlot("bar", trace);
+            updateBar(currentSample);
+            updateBubble(currentSample);
+        }
+        // console.log(id,currentDemo,currentSample);
     }
 
+    function updateDemo(demoData) {
+        let displayData = document.getElementById("sample-metadata");
+        let ul = document.createElement("ul");
+        displayData.innerHTML = "";
+        for (key in demoData) {        
+            let li = document.createElement("li");
+            li.appendChild(document.createTextNode(`${key}: ${demoData[key]}`));
+            ul.appendChild(li);
+            };           
+            displayData.appendChild(ul);
+        }
+    
+        function updateBar(sampleData) {
+            yArray = sampleData.otu_ids.slice(0,10);
+            for (let i = 0; i < yArray.length; i++) {
+                yArray[i] = `OTU ${yArray[i]}`;
+            }
+            yArray.reverse();
+            xArray = sampleData.sample_values.slice(0,10);
+            xArray.reverse();
+            labelArray = sampleData.otu_labels.slice(0,10);
+            let trace = [{
+                type: 'bar',
+                x: xArray,
+                y: yArray,
+                orientation: 'h'
+
+
+            }];
+            Plotly.newPlot('bar', trace);
+        }
+        
+        function updateBubble(sampleData) {
+            let trace = [{
+                mode: 'markers',
+                x: sampleData.otu_ids,
+                y: sampleData.sample_values,
+                marker: {
+                    size: sampleData.sample_values,
+                    color: sampleData.otu_ids
+                },
+                text: sampleData.otu_labels
+            }]
+            Plotly.newPlot('bubble',trace);
+        }
+
+        updateDemo(currentDemo);
+        updateBar(currentSample);
+        updateBubble(currentSample);
     
 }));
 
